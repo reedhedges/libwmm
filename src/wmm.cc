@@ -10,14 +10,20 @@ extern "C" {
 #include "EGM9615.h"
 }
 
+using namespace libwmm;
 
-struct WMM_private
+namespace libwmm_private 
 {
-    MAGtype_MagneticModel *MagneticModels[1];
-    MAGtype_MagneticModel *TimedMagneticModel;
-    MAGtype_Ellipsoid Ellip;
-    MAGtype_Geoid Geoid;
-};
+  struct WMM_private
+  {
+      MAGtype_MagneticModel *MagneticModels[1];
+      MAGtype_MagneticModel *TimedMagneticModel;
+      MAGtype_Ellipsoid Ellip;
+      MAGtype_Geoid Geoid;
+  };
+}
+
+using namespace libwmm_private;
 
 WMM::WMM(const std::filesystem::path& filename)
 {

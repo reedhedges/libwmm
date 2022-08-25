@@ -2,7 +2,7 @@ CC ?= gcc
 CXX ?= g++
 AR ?= ar
 RANLIB ?= ranlib
-CFLAGS = -g -O2 -flto=auto -Wall -W -Wextra -Iinclude -Isrc
+CFLAGS = -O3 -flto=auto -Wall -W -Wextra -Iinclude -Isrc
 CXXFLAGS = -std=c++20 $(CFLAGS)
 # Note could also use -flto=thin on Clang, or -flto if -flto=auto is not supported.
 LDFLAGS = -fuse-linker-plugin # allow linking programs to use LTO
