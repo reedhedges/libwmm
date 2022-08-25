@@ -7,6 +7,8 @@ CXXFLAGS = -std=c++20 $(CFLAGS)
 # Note could also use -flto=thin on Clang, or -flto if -flto=auto is not supported.
 LDFLAGS = -fuse-linker-plugin # allow linking programs to use LTO
 LIBS = -lm
+INSTALL_DIR ?= /usr/local
+INSTALL ?= install
 
 all: libwmm.a test
 
@@ -32,6 +34,11 @@ clean:
 	-rm -f obj/*.o
 	-rm -f libwmm.a
 
+install: libwmm.a include/libwmm/wmm.hh
+	$(INSTALL) -D -m 644 libwmm.a $(INSTALL_DIR)/lib/libwmm.a
+	$(INSTALL) -D -m 644 include/libwmm/wmm.hh $(INSTALL_DIR)/include/libwmm/wmm.hh
+	
+
 # (Re)-generate compile_commands.json which is used by tools like Intellisense (VS Code)
 # clang-tidy, other linters/analyzers.  Regenerate this if VS code won't get rid of some 
 # compile errors in the Problems panel.
@@ -39,7 +46,7 @@ clean:
 compile_commands.json: Makefile clean
 	bear -- $(MAKE)
 
-.PHONY: all clean dep
+.PHONY: all clean install
 
 Makefile.dep:
 	$(CXX) $(CFLAGS) -MM src/*.c src/*.cc | awk '$$1 ~ /:/{printf "obj/%s\n", $$0} $$1 !~ /:/' > Makefile.dep

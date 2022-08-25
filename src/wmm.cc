@@ -3,7 +3,7 @@
 #include <chrono>
 #include <cassert>
 
-#include "wmm.hh"
+#include "libwmm/wmm.hh"
 
 extern "C" {
 #include "GeomagnetismHeader.h"

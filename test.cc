@@ -1,5 +1,5 @@
 
-#include "wmm.hh"
+#include "libwmm/wmm.hh"
 #include <cmath>
 #include <cassert>
 #include <cstdio>
