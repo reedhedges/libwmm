@@ -122,7 +122,7 @@ double WMM::calculateDeclination(double latitude, double longitude, double altit
 }
 
 
-WMM::~WMM()
+WMM::~WMM() noexcept
 {
     MAG_FreeMagneticModelMemory(priv->TimedMagneticModel);
     MAG_FreeMagneticModelMemory(priv->MagneticModels[0]);

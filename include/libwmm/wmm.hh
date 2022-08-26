@@ -6,7 +6,7 @@
 #include <string>
 
 namespace libwmm_private {
-  class WMM_private;
+  struct WMM_private;
 }
 
 
