@@ -26,6 +26,10 @@
 #ifndef GEOMAGHEADER_H
 #define GEOMAGHEADER_H
 
+/*TODO use this to help fix ignored error return codes: #define MAG_NODISCARD __attribute__((warn_unused_result))*/
+#define MAG_NODISCARD 
+
+
 #define READONLYMODE "r"
 #define MAXLINELENGTH (1024)
 #define NOOFPARAMS (15)
@@ -279,14 +283,16 @@ int MAG_Geomag(MAGtype_Ellipsoid Ellip,
         MAGtype_CoordSpherical CoordSpherical,
         MAGtype_CoordGeodetic CoordGeodetic,
         MAGtype_MagneticModel *TimedMagneticModel,
-        MAGtype_GeoMagneticElements *GeoMagneticElements);
+        MAGtype_GeoMagneticElements *GeoMagneticElements)
+MAG_NODISCARD;
 
 /* Like MAG_Geomag but only calculates declination rather than all geomagnetic paremeters. rh */
 int MAG_declination(MAGtype_Ellipsoid Ellip,
         MAGtype_CoordSpherical CoordSpherical,
         MAGtype_CoordGeodetic CoordGeodetic,
         MAGtype_MagneticModel *TimedMagneticModel,
-        double *declination);
+        double *declination)
+MAG_NODISCARD;
 
 void MAG_Gradient(MAGtype_Ellipsoid Ellip,
         MAGtype_CoordGeodetic CoordGeodetic, 
@@ -294,15 +300,17 @@ void MAG_Gradient(MAGtype_Ellipsoid Ellip,
         MAGtype_Gradient *Gradient);
 
 
-int MAG_robustReadMagneticModel_Large(char *filename, char* filenameSV, MAGtype_MagneticModel **MagneticModel);
+int MAG_robustReadMagneticModel_Large(char *filename, char* filenameSV, MAGtype_MagneticModel **MagneticModel) MAG_NODISCARD;
 
-int MAG_robustReadMagModels(char *filename, MAGtype_MagneticModel *(*magneticmodels)[], int array_size);
+int MAG_robustReadMagModels(char *filename, MAGtype_MagneticModel *(*magneticmodels)[], int array_size) MAG_NODISCARD;
 
 int MAG_SetDefaults(MAGtype_Ellipsoid *Ellip, MAGtype_Geoid *Geoid);
 
 /*User Interface*/
 
 void MAG_Error(int control);
+
+#ifdef MAG_UNUSED_CODE
 
 int MAG_GetUserGrid(MAGtype_CoordGeodetic *minimum,
         MAGtype_CoordGeodetic *maximum,
@@ -314,12 +322,12 @@ int MAG_GetUserGrid(MAGtype_CoordGeodetic *minimum,
         int *ElementOption,
         int *PrintOption,
         char *OutputFile,
-        MAGtype_Geoid *Geoid);
+        MAGtype_Geoid *Geoid) MAG_NODISCARD;
 
 int MAG_GetUserInput(MAGtype_MagneticModel *MagneticModel,
         MAGtype_Geoid *Geoid,
         MAGtype_CoordGeodetic *CoordGeodetic,
-        MAGtype_Date *MagneticDate);
+        MAGtype_Date *MagneticDate) MAG_NODISCARD;
 
 void MAG_PrintGradient(MAGtype_Gradient Gradient);
 
@@ -334,6 +342,8 @@ void MAG_PrintUserData(MAGtype_GeoMagneticElements GeomagElements,
 int MAG_ValidateDMSstring(char *input, int min, int max, char *Error);
 
 int MAG_Warnings(int control, double value, MAGtype_MagneticModel *MagneticModel);
+
+#endif
 
 /*Memory and File Processing*/
 
@@ -355,37 +365,39 @@ int MAG_FreeMagneticModelMemory(MAGtype_MagneticModel *MagneticModel);
 
 int MAG_FreeSphVarMemory(MAGtype_SphericalHarmonicVariables *SphVar);
 
+#ifdef MAG_UNUSED_CODE
 void MAG_PrintWMMFormat(char *filename, MAGtype_MagneticModel *MagneticModel);
 
 void MAG_PrintEMMFormat(char *filename, char *filenameSV, MAGtype_MagneticModel *MagneticModel);
 
 void MAG_PrintSHDFFormat(char *filename, MAGtype_MagneticModel *(*MagneticModel)[], int epochs);
+#endif
 
-int MAG_readMagneticModel(char *filename, MAGtype_MagneticModel *MagneticModel);
+int MAG_readMagneticModel(char *filename, MAGtype_MagneticModel *MagneticModel) MAG_NODISCARD;
 
-int MAG_readMagneticModel_Large(char *filename, char *filenameSV, MAGtype_MagneticModel *MagneticModel);
+int MAG_readMagneticModel_Large(char *filename, char *filenameSV, MAGtype_MagneticModel *MagneticModel) MAG_NODISCARD;
 
-int MAG_readMagneticModel_SHDF(char *filename, MAGtype_MagneticModel *(*magneticmodels)[], int array_size);
+int MAG_readMagneticModel_SHDF(char *filename, MAGtype_MagneticModel *(*magneticmodels)[], int array_size) MAG_NODISCARD;
 
-char *MAG_Trim(char *str);
+char *MAG_Trim(char *str) MAG_NODISCARD;
 
 /*Conversions, Transformations, and other Calculations*/
 void MAG_BaseErrors(double DeclCoef, double DeclBaseline, double InclOffset, double FOffset, double Multiplier, double H, double* DeclErr, double* InclErr, double* FErr);
 
-int MAG_CalculateGeoMagneticElements(MAGtype_MagneticResults *MagneticResultsGeo, MAGtype_GeoMagneticElements *GeoMagneticElements);
-double MAG_CalculateGeoMagneticDeclinationElement(MAGtype_MagneticResults *MagneticResultsGeo);
+int MAG_CalculateGeoMagneticElements(MAGtype_MagneticResults *MagneticResultsGeo, MAGtype_GeoMagneticElements *GeoMagneticElements) MAG_NODISCARD;
+double MAG_CalculateGeoMagneticDeclinationElement(MAGtype_MagneticResults *MagneticResultsGeo) MAG_NODISCARD;
 
 void MAG_CalculateGradientElements(MAGtype_MagneticResults GradResults, MAGtype_GeoMagneticElements MagneticElements, MAGtype_GeoMagneticElements *GradElements);
 
-int MAG_CalculateSecularVariationElements(MAGtype_MagneticResults MagneticVariation, MAGtype_GeoMagneticElements *MagneticElements);
+int MAG_CalculateSecularVariationElements(MAGtype_MagneticResults MagneticVariation, MAGtype_GeoMagneticElements *MagneticElements) MAG_NODISCARD;
 
-int MAG_CalculateGridVariation(MAGtype_CoordGeodetic location, MAGtype_GeoMagneticElements *elements);
+int MAG_CalculateGridVariation(MAGtype_CoordGeodetic location, MAGtype_GeoMagneticElements *elements) MAG_NODISCARD;
 
 void MAG_CartesianToGeodetic(MAGtype_Ellipsoid Ellip, double x, double y, double z, MAGtype_CoordGeodetic *CoordGeodetic);
 
-MAGtype_CoordGeodetic MAG_CoordGeodeticAssign(MAGtype_CoordGeodetic CoordGeodetic);
+MAGtype_CoordGeodetic MAG_CoordGeodeticAssign(MAGtype_CoordGeodetic CoordGeodetic) MAG_NODISCARD;
 
-int MAG_DateToYear(MAGtype_Date *Calendar_Date, char *Error);
+int MAG_DateToYear(MAGtype_Date *Calendar_Date, char *Error) MAG_NODISCARD;
 
 void MAG_DegreeToDMSstring(double DegreesOfArc, int UnitDepth, char *DMSstring);
 
@@ -393,28 +405,28 @@ void MAG_DMSstringToDegree(char *DMSstring, double *DegreesOfArc);
 
 void MAG_ErrorCalc(MAGtype_GeoMagneticElements B, MAGtype_GeoMagneticElements* Errors);
 
-int MAG_GeodeticToSpherical(MAGtype_Ellipsoid Ellip, MAGtype_CoordGeodetic CoordGeodetic, MAGtype_CoordSpherical *CoordSpherical);
+int MAG_GeodeticToSpherical(MAGtype_Ellipsoid Ellip, MAGtype_CoordGeodetic CoordGeodetic, MAGtype_CoordSpherical *CoordSpherical) MAG_NODISCARD;
 
-MAGtype_GeoMagneticElements MAG_GeoMagneticElementsAssign(MAGtype_GeoMagneticElements Elements);
+MAGtype_GeoMagneticElements MAG_GeoMagneticElementsAssign(MAGtype_GeoMagneticElements Elements) MAG_NODISCARD;
 
-MAGtype_GeoMagneticElements MAG_GeoMagneticElementsScale(MAGtype_GeoMagneticElements Elements, double factor);
+MAGtype_GeoMagneticElements MAG_GeoMagneticElementsScale(MAGtype_GeoMagneticElements Elements, double factor) MAG_NODISCARD;
 
-MAGtype_GeoMagneticElements MAG_GeoMagneticElementsSubtract(MAGtype_GeoMagneticElements minuend, MAGtype_GeoMagneticElements subtrahend);
+MAGtype_GeoMagneticElements MAG_GeoMagneticElementsSubtract(MAGtype_GeoMagneticElements minuend, MAGtype_GeoMagneticElements subtrahend) MAG_NODISCARD;
 
-int MAG_GetTransverseMercator(MAGtype_CoordGeodetic CoordGeodetic, MAGtype_UTMParameters *UTMParameters);
+int MAG_GetTransverseMercator(MAGtype_CoordGeodetic CoordGeodetic, MAGtype_UTMParameters *UTMParameters) MAG_NODISCARD;
 
 int MAG_GetUTMParameters(double Latitude,
         double Longitude,
         int *Zone,
         char *Hemisphere,
-        double *CentralMeridian);
+        double *CentralMeridian) MAG_NODISCARD;
 
-int MAG_isNaN(double d);
+int MAG_isNaN(double d) MAG_NODISCARD;
 
 int MAG_RotateMagneticVector(MAGtype_CoordSpherical,
         MAGtype_CoordGeodetic CoordGeodetic,
         MAGtype_MagneticResults MagneticResultsSph,
-        MAGtype_MagneticResults *MagneticResultsGeo);
+        MAGtype_MagneticResults *MagneticResultsGeo) MAG_NODISCARD;
 
 void MAG_SphericalToCartesian(MAGtype_CoordSpherical CoordSpherical, double *x, double *y, double *z);
 
@@ -425,57 +437,57 @@ void MAG_TMfwd4(double Eps, double Epssq, double K0R4, double K0R4oa,
         double falseN, int XYonly, double Lambda, double Phi,
         double *X, double *Y, double *pscale, double *CoM);  
 
-int MAG_YearToDate(MAGtype_Date *Date);
+int MAG_YearToDate(MAGtype_Date *Date) MAG_NODISCARD;
 
 
 /*Spherical Harmonics*/
 
-int MAG_AssociatedLegendreFunction(MAGtype_CoordSpherical CoordSpherical, int nMax, MAGtype_LegendreFunction *LegendreFunction);
+int MAG_AssociatedLegendreFunction(MAGtype_CoordSpherical CoordSpherical, int nMax, MAGtype_LegendreFunction *LegendreFunction) MAG_NODISCARD;
 
-int MAG_CheckGeographicPole(MAGtype_CoordGeodetic *CoordGeodetic);
+int MAG_CheckGeographicPole(MAGtype_CoordGeodetic *CoordGeodetic) MAG_NODISCARD;
 
 int MAG_ComputeSphericalHarmonicVariables(MAGtype_Ellipsoid Ellip,
         MAGtype_CoordSpherical CoordSpherical,
         int nMax,
-        MAGtype_SphericalHarmonicVariables * SphVariables);
+        MAGtype_SphericalHarmonicVariables * SphVariables) MAG_NODISCARD;
 
 void MAG_GradY(MAGtype_Ellipsoid Ellip, MAGtype_CoordSpherical CoordSpherical, MAGtype_CoordGeodetic CoordGeodetic,
         MAGtype_MagneticModel *TimedMagneticModel, MAGtype_GeoMagneticElements GeoMagneticElements, MAGtype_GeoMagneticElements *GradYElements);
 
 void MAG_GradYSummation(MAGtype_LegendreFunction *LegendreFunction, MAGtype_MagneticModel *MagneticModel, MAGtype_SphericalHarmonicVariables SphVariables, MAGtype_CoordSpherical CoordSpherical, MAGtype_MagneticResults *GradY);
 
-int MAG_PcupHigh(double *Pcup, double *dPcup, double x, int nMax);
+int MAG_PcupHigh(double *Pcup, double *dPcup, double x, int nMax) MAG_NODISCARD;
 
-int MAG_PcupLow(double *Pcup, double *dPcup, double x, int nMax);
+int MAG_PcupLow(double *Pcup, double *dPcup, double x, int nMax) MAG_NODISCARD;
 
 int MAG_SecVarSummation(MAGtype_LegendreFunction *LegendreFunction,
         MAGtype_MagneticModel *MagneticModel,
         MAGtype_SphericalHarmonicVariables SphVariables,
         MAGtype_CoordSpherical CoordSpherical,
-        MAGtype_MagneticResults *MagneticResults);
+        MAGtype_MagneticResults *MagneticResults) MAG_NODISCARD;
 
 int MAG_SecVarSummationSpecial(MAGtype_MagneticModel *MagneticModel,
         MAGtype_SphericalHarmonicVariables SphVariables,
         MAGtype_CoordSpherical CoordSpherical,
-        MAGtype_MagneticResults *MagneticResults);
+        MAGtype_MagneticResults *MagneticResults) MAG_NODISCARD;
 
 int MAG_Summation(MAGtype_LegendreFunction *LegendreFunction,
         MAGtype_MagneticModel *MagneticModel,
         MAGtype_SphericalHarmonicVariables SphVariables,
         MAGtype_CoordSpherical CoordSpherical,
-        MAGtype_MagneticResults *MagneticResults);
+        MAGtype_MagneticResults *MagneticResults) MAG_NODISCARD;
 
 int MAG_SummationSpecial(MAGtype_MagneticModel *MagneticModel,
         MAGtype_SphericalHarmonicVariables SphVariables,
         MAGtype_CoordSpherical CoordSpherical,
-        MAGtype_MagneticResults *MagneticResults);
+        MAGtype_MagneticResults *MagneticResults) MAG_NODISCARD;
 
-int MAG_TimelyModifyMagneticModel(MAGtype_Date UserDate, MAGtype_MagneticModel *MagneticModel, MAGtype_MagneticModel *TimedMagneticModel);
+int MAG_TimelyModifyMagneticModel(MAGtype_Date UserDate, MAGtype_MagneticModel *MagneticModel, MAGtype_MagneticModel *TimedMagneticModel) MAG_NODISCARD;
 
 /*Geoid*/
 
 
-int MAG_ConvertGeoidToEllipsoidHeight(MAGtype_CoordGeodetic *CoordGeodetic, MAGtype_Geoid *Geoid);
+int MAG_ConvertGeoidToEllipsoidHeight(MAGtype_CoordGeodetic *CoordGeodetic, MAGtype_Geoid *Geoid) MAG_NODISCARD;
 /*
  * The function Convert_Geoid_To_Ellipsoid_Height converts the specified WGS84
  * geoid height at the specified geodetic coordinates to the equivalent
@@ -488,7 +500,7 @@ int MAG_ConvertGeoidToEllipsoidHeight(MAGtype_CoordGeodetic *CoordGeodetic, MAGt
  *
  */
 
-int MAG_GetGeoidHeight(double Latitude, double Longitude, double *DeltaHeight, MAGtype_Geoid *Geoid);
+int MAG_GetGeoidHeight(double Latitude, double Longitude, double *DeltaHeight, MAGtype_Geoid *Geoid) MAG_NODISCARD;
 /*
  * The private function Get_Geoid_Height returns the height of the
  * WGS84 geiod above or below the WGS84 ellipsoid,
@@ -512,7 +524,7 @@ void MAG_PrintUserDataWithUncertainty(MAGtype_GeoMagneticElements GeomagElements
         MAGtype_Geoid *Geoid);
 
 void MAG_GetDeg(char* Query_String, double* latitude, double bounds[2]);
-int MAG_GetAltitude(char* Query_String, MAGtype_Geoid *Geoid, MAGtype_CoordGeodetic* coords, int bounds[2], int AltitudeSetting);
+int MAG_GetAltitude(char* Query_String, MAGtype_Geoid *Geoid, MAGtype_CoordGeodetic* coords, int bounds[2], int AltitudeSetting) MAG_NODISCARD;
 
 
 
