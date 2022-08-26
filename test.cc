@@ -12,6 +12,7 @@ void close(double d1, double d2)
 int main()
 {
   libwmm::WMM wmm("WMM.COF");
+  printf("Model name = %s\n", wmm.modelName().c_str());
   double d = wmm.calculateDeclination(42.94694, -72.10028, 0, std::chrono::year(2022)/8/25); //{2022, 8, 25});
   close(d, -13.95237);
   printf("declination=%f\n", d);

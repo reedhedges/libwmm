@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <string>
 
 namespace libwmm_private {
   class WMM_private;
@@ -26,6 +27,7 @@ namespace libwmm
         @param date calculate declination for given date
         Throws std::runtime_error if declination could not be calculated or @a date is invalid */
     double calculateDeclination(double latitude, double longitude, double altitude, std::chrono::year_month_day date) const;
+    std::string modelName();
     ~WMM() noexcept;
   };
    

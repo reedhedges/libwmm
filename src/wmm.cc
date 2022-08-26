@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <filesystem>
 #include <chrono>
+#include <string>
 #include <cassert>
 
 #include "libwmm/wmm.hh"
@@ -24,6 +25,11 @@ namespace libwmm_private
 }
 
 using namespace libwmm_private;
+
+std::string WMM::modelName()
+{
+  return std::string{priv->MagneticModels[0]->ModelName};
+}
 
 WMM::WMM(const std::filesystem::path& filename)
 {
