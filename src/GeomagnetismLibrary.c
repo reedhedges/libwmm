@@ -2146,7 +2146,8 @@ CALLS : MAG_GetTransverseMercator
         return 1;
     } else
     {
-        MAG_GetTransverseMercator(location, &UTMParameters);
+        int err = MAG_GetTransverseMercator(location, &UTMParameters);
+        if(err) return err;
         elements->GV = elements->Decl - UTMParameters.ConvergenceOfMeridians;
     }
     return 0;
@@ -2577,8 +2578,8 @@ OUTPUT : UTMParameters : Pointer to data structure MAGtype_UTMParameters with th
     int XYonly;
     double X, Y, pscale, CoM;
     int Zone;
-    char Hemisphere;
-
+    char Hemisphere = '?';
+    int err;
 
 
     /*   Get the map projection  parameters */
@@ -2586,11 +2587,11 @@ OUTPUT : UTMParameters : Pointer to data structure MAGtype_UTMParameters with th
     Lambda = DEG2RAD(CoordGeodetic.lambda);
     Phi = DEG2RAD(CoordGeodetic.phi);
 
-    MAG_GetUTMParameters(Phi, Lambda, &Zone, &Hemisphere, &Lam0);
+    err = MAG_GetUTMParameters(Phi, Lambda, &Zone, &Hemisphere, &Lam0);
+    if(err) return err;
     K0 = 0.9996;
 
-
-
+    assert(Hemisphere == 'n' || Hemisphere == 'N' || Hemisphere == 's' || Hemisphere == 'S');
     if(Hemisphere == 'n' || Hemisphere == 'N')
     {
         falseN = 0;

@@ -3,7 +3,7 @@ CFLAGS = -g -O2 -Wall -W
 LDFLAGS =
 LIBS = -lm
 
-all: wmm_file wmm_grid wmm_point
+all: wmm_point
 
 wmm_file: wmm_file.o GeomagnetismLibrary.o
 	${CC} ${LDFLAGS} -o wmm_file wmm_file.o GeomagnetismLibrary.o ${LIBS}
