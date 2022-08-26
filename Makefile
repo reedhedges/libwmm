@@ -1,41 +1,61 @@
+INSTALL_DIR ?= /usr/local
+OBJ_DIR ?= obj
+LIB_DIR ?= lib
+
 CC ?= gcc
 CXX ?= g++
 AR ?= ar
 RANLIB ?= ranlib
-CFLAGS = -O3 -flto=auto -Wall -W -Wextra -Iinclude -Isrc
-CXXFLAGS = -std=c++20 $(CFLAGS)
-# Note could also use -flto=thin on Clang, or -flto if -flto=auto is not supported.
-LDFLAGS = -fuse-linker-plugin # allow linking programs to use LTO
-LIBS = -lm
-INSTALL_DIR ?= /usr/local
 INSTALL ?= install
 
-all: libwmm.a test
+COMMON_CFLAGS = -g -O3 -fPIC -Wall -W -Wextra -Iinclude -Isrc  #-flto=auto
+CFLAGS = $(COMMON_CFLAGS) $(EXTRA_CFLAGS)
+CXXFLAGS = -std=c++20 $(COMMON_CFLAGS) $(EXTRA_CXXFLAGS)
+# Note could also use -flto=thin on Clang, or -flto if -flto=auto is not supported.
+LDFLAGS = #-fuse-linker-plugin # allow linking programs to use LTO
+LIBS = -lm
 
-libwmm.a: obj/wmm.o obj/GeomagnetismLibrary.o
+all: $(LIB_DIR)/libwmm.a
+
+info: FORCE
+	@echo
+	@echo libwmm:
+	@echo   CC=$(CC)
+	@echo   CXX=$(CXX)
+	@echo   OBJ_DIR=$(OBJ_DIR)
+	@echo   LIB_DIR=$(LIB_DIR)
+	@echo   INSTALL_DIR=$(INSTALL_DIR)
+	@echo   AR=$(AR)
+	@echo   RANLIB=$(RANLIB)
+	@echo   CFLAGS=$(CFLAGS)
+	@echo   CXXFLAGS=$(CXXFLAGS)
+	@echo
+
+$(LIB_DIR)/libwmm.a: $(OBJ_DIR)/wmm.o $(OBJ_DIR)/GeomagnetismLibrary.o
+	@mkdir -p $(LIB_DIR)
 	$(AR) -cr $@ $^ 
 	$(RANLIB) $@
 
-obj/%.o: src/%.c
-	@mkdir -p obj
+$(OBJ_DIR)/%.o: src/%.c
+	@mkdir -p $(OBJ_DIR)
 	$(CC) -c -o $@ $(CFLAGS) $<
 
-obj/%.o: src/%.cc
-	@mkdir -p obj
+$(OBJ_DIR)/%.o: src/%.cc
+	@mkdir -p $(OBJ_DIR)
 	$(CXX) -c -o $@ $(CXXFLAGS) $<
 
 wmm_point: src/wmm_point.o src/GeomagnetismLibrary.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LIBS)
 
-test: test.cc libwmm.a
-	$(CXX) -o $@ $(CXXFLAGS) $< libwmm.a $(LIBS)
+test: test.cc $(LIB_DIR)/libwmm.a
+	$(CXX) -o $@ $(CXXFLAGS) $< $(LIB_DIR)/libwmm.a $(LIBS)
 
 clean:
-	-rm -f obj/*.o
-	-rm -f libwmm.a
+	-rm -f $(OBJ_DIR)/*.o
+	-rm -f $(LIB_DIR)/libwmm.a
 
-install: libwmm.a include/libwmm/wmm.hh
-	$(INSTALL) -D -m 644 libwmm.a $(INSTALL_DIR)/lib/libwmm.a
+install: $(LIB_DIR)/libwmm.a include/libwmm/wmm.hh
+	$(INSTALL) -D -m 644 $(LIB_DIR)/libwmm.a $(INSTALL_DIR)/lib/libwmm.a
 	$(INSTALL) -D -m 644 include/libwmm/wmm.hh $(INSTALL_DIR)/include/libwmm/wmm.hh
 	
 
@@ -49,7 +69,9 @@ compile_commands.json: Makefile clean
 .PHONY: all clean install
 
 Makefile.dep:
-	$(CXX) $(CFLAGS) -MM src/*.c src/*.cc | awk '$$1 ~ /:/{printf "obj/%s\n", $$0} $$1 !~ /:/' > Makefile.dep
+	$(CXX) $(CFLAGS) -MM src/*.c src/*.cc | awk '$$1 ~ /:/{printf "$(OBJ_DIR)/%s\n", $$0} $$1 !~ /:/' > Makefile.dep
 
 include Makefile.dep
 	
+FORCE:
+
