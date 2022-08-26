@@ -3,6 +3,7 @@
 #include <chrono>
 #include <string>
 #include <cassert>
+#include <climits>
 
 #include "libwmm/wmm.hh"
 
@@ -86,9 +87,10 @@ double WMM::calculateDeclination(double latitude, double longitude, double altit
     if(!date.ok())
       throw std::runtime_error("WMM::calculateDeclination: Invalid date given");
     UserDate.Year = int(date.year());
-    UserDate.Month = unsigned(date.month());
-    UserDate.Day = unsigned(date.day());
-    UserDate.DecimalYear = 99999; // means not used?
+    assert(unsigned(date.month()) <= INT_MAX);
+    UserDate.Month = (int) unsigned(date.month());
+    assert(unsigned(date.day()) <= INT_MAX);
+    UserDate.Day = (int) unsigned(date.day());
     char errbuf[256];
     if(!MAG_DateToYear(&UserDate, errbuf))
     {
