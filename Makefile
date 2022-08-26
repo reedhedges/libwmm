@@ -29,11 +29,12 @@ info: FORCE
 	@echo   RANLIB=$(RANLIB)
 	@echo   CFLAGS=$(CFLAGS)
 	@echo   CXXFLAGS=$(CXXFLAGS)
+	@echo   EXTRA_LDFLAGS=$(EXTRA_LDFLAGS)
 	@echo
 
-$(LIB_DIR)/libwmm.a: $(OBJ_DIR)/wmm.o $(OBJ_DIR)/GeomagnetismLibrary.o
+$(LIB_DIR)/libwmm.a: $(OBJ_DIR)/wmm.o $(OBJ_DIR)/GeomagnetismLibrary.o $(OBJ_DIR)/EGM9615.o
 	@mkdir -p $(LIB_DIR)
-	$(AR) -cr $@ $^ 
+	$(AR) crv $@ $^ 
 	$(RANLIB) $@
 
 $(OBJ_DIR)/%.o: src/%.c
@@ -44,7 +45,7 @@ $(OBJ_DIR)/%.o: src/%.cc
 	@mkdir -p $(OBJ_DIR)
 	$(CXX) -c -o $@ $(CXXFLAGS) $<
 
-wmm_point: src/wmm_point.o src/GeomagnetismLibrary.o
+wmm_point: src/wmm_point.o src/GeomagnetismLibrary.o src/EGM9615.o
 	$(CC) -o $@ $(CFLAGS) $^ $(LIBS)
 
 test: test.cc $(LIB_DIR)/libwmm.a

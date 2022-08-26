@@ -27,8 +27,7 @@ Supply path to this file when creating a WMM object.
   * Change GeomagnetismLibrary.c to store error messages instead of printing them to stdout.
   * Add option to GeomagnetismLibrary to read COF file from user-supplied stream (FILE pointer) or callback functions.
   * Could add API that doesn't use `std::chrono::year_month_day` so it doesn't require C++20.
-  * Maybe move data from EGM9615 into separate .c file with extern interface so it doesn't need to be parsed every time wmm.cc is compiled. Try to prevent IDE's and analysis tools like
-clang-tidy from parsing it. (Since it's big.) 
+  * Maybe move data from EGM9615 into separate .c file with extern interface so it doesn't need to be parsed every time wmm.cc is compiled. Try to prevent IDEs etc.  from parsing it. (Since it's big.) 
 
 ### Copyright and Disclaimers
 

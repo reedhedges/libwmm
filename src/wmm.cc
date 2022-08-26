@@ -66,7 +66,7 @@ WMM::WMM(const std::filesystem::path& filename)
 
 
     /* Set EGM96 Geoid parameters */
-    priv->Geoid.GeoidHeightBuffer = GeoidHeightBuffer;
+    priv->Geoid.GeoidHeightBuffer = GeoidHeightBuffer;  // GeoidHeightBuffer variables are arrays, this copies pointer not whole data table 
     priv->Geoid.Geoid_Initialized = 1;
     /* Set EGM96 Geoid parameters END */
 }
