@@ -12,19 +12,26 @@ for that coordinate based on data read from a magnetic model file (WMM.COF).
 Requires C++20 since it uses `std::chrono::year_month_day` type added in C++20.
 (This could be changed if neccesary.)  
 
-Various output directories and names of commands can be set via environment variables when running `make`,
+You can use either CMake or just GNU Make to build.  If using Make, various output 
+directories and names of commands can be set via environment variables when running `make`,
 see top of Makefile.
 
-libwmm is compiled as a static library with optimization and link-time optimization (LTO/IPO) enabled.
+libwmm is compiled as a static library.
 
 To get initial or updated WMM.COF file, download from 
 <https://www.ngdc.noaa.gov/geomag/WMM/> and extract from archive.   
 Supply path to this file when creating a WMM object.
 
+SHDF model file support has been removed, only WMM.COF file is supported.
+
 ### To Do
 
+  * Verify all CMake build types (Debug, Release, etc.). Enable IPO in CMake Release build (optional).
   * More tests including impossible or unusual locations (poles?), verify behavior in "blackout" zones.
-  * Change GeomagnetismLibrary.c to store error messages instead of printing them to stdout.
+  * Improve error handling in GeomagnetismLibrary.c:
+    * Some functions return an error code > 0 on errors, and 0 on success. Some return 1 (true) on success, 0 on error. Fix.
+    * Store error messages instead of printing them to stdout.
+    * Ensure that error code return values from functions aren't being ignored.
   * Add option to GeomagnetismLibrary to read COF file from user-supplied stream (FILE pointer) or callback functions.
   * Could add API that doesn't use `std::chrono::year_month_day` so it doesn't require C++20.
   * Maybe move data from EGM9615 into separate .c file with extern interface so it doesn't need to be parsed every time wmm.cc is compiled. Try to prevent IDEs etc.  from parsing it. (Since it's big.) 
@@ -41,8 +48,7 @@ third parties producing copyrighted works consisting predominantly of the materi
 U.S. government agencies must provide notice with such work(s) identifying the U.S. Government material
 incorporated and stating that such material is not subject to copyright protection.
 
-`GeomagnetismLibrary.c` has been modified to
-add functions that only calculate declination and skip other parameters,
-and to remove unused functions. Additional error checking has also been added and 
-minor errors/warnings fixed for C++20/C17.
+The NOAA-supplied code has been modified to add functions that only calculate declination and skip other parameters,
+to remove unused functions. Parts of the API have been changed for better consistency, and to reduce some memory allocation.
+Additional error checking has also been added and minor errors/warnings fixed for C++20/C17.
 

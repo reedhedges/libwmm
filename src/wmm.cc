@@ -18,8 +18,8 @@ namespace libwmm_private
 {
   struct WMM_private
   {
-      MAGtype_MagneticModel *MagneticModels[1];
-      MAGtype_MagneticModel *TimedMagneticModel;
+      MAGtype_MagneticModel MagneticModel;
+      MAGtype_MagneticModel TimedMagneticModel;
       MAGtype_Ellipsoid Ellip;
       MAGtype_Geoid Geoid;
   };
@@ -29,7 +29,7 @@ using namespace libwmm_private;
 
 std::string WMM::modelName()
 {
-  return std::string{priv->MagneticModels[0]->ModelName};
+  return std::string{priv->MagneticModel.ModelName};
 }
 
 WMM::WMM(const std::filesystem::path& filename)
@@ -37,36 +37,32 @@ WMM::WMM(const std::filesystem::path& filename)
     priv = new WMM_private;
     assert(priv);
 
-    int epochs = 1;
-    if(!MAG_robustReadMagModels(const_cast<char*>(filename.string().c_str()), &(priv->MagneticModels), epochs)) 
+    // todo move some or all of this into WMM_private constructor?
+
+    int err = MAG_robustReadMagModel(filename.string().c_str(), &(priv->MagneticModel));
+    if(err)
     {
         delete priv;
         throw std::runtime_error(std::string("Error loading WMM data file \"") + std::string(filename) + std::string("\""));
     }
 
-    if(priv->MagneticModels[0] == NULL)
+    int nMax = 0;
+    if(nMax < priv->MagneticModel.nMax) 
+      nMax = priv->MagneticModel.nMax;
+    int NumTerms = ((nMax + 1) * (nMax + 2) / 2);
+    err = MAG_AllocateModelTerms(&(priv->TimedMagneticModel), NumTerms); /* For storing the time modified WMM Model parameters */
+    if(err)
     {
       delete priv;
-      throw std::runtime_error("Error initializing WMM");
-    }  
-
-    int nMax = 0;
-    if(nMax < priv->MagneticModels[0]->nMax) 
-      nMax = priv->MagneticModels[0]->nMax;
-    int NumTerms = ((nMax + 1) * (nMax + 2) / 2);
-    priv->TimedMagneticModel = MAG_AllocateModelMemory(NumTerms); /* For storing the time modified WMM Model parameters */
-    if(priv->TimedMagneticModel == NULL)
-    {
-        delete priv;
-        throw std::runtime_error("Error initializing WMM");
+      throw std::bad_alloc();
     }
     MAG_SetDefaults(&(priv->Ellip), &(priv->Geoid)); /* Set default values and constants */
-    /* Check for Geographic Poles */
+    /* Check for Geographic Poles ?? */
 
 
 
     /* Set EGM96 Geoid parameters */
-    priv->Geoid.GeoidHeightBuffer = GeoidHeightBuffer;  // GeoidHeightBuffer variables are arrays, this copies pointer not whole data table 
+    priv->Geoid.GeoidHeightBuffer = GeoidHeightBuffer;  // GeoidHeightBuffer is array, this copies pointer not whole data table 
     priv->Geoid.Geoid_Initialized = 1;
     /* Set EGM96 Geoid parameters END */
 }
@@ -98,23 +94,23 @@ double WMM::calculateDeclination(double latitude, double longitude, double altit
     }
     // todo do we need to call MAG_DateToYear?
 
-    if(UserDate.DecimalYear > priv->MagneticModels[0]->CoefficientFileEndDate || UserDate.DecimalYear < priv->MagneticModels[0]->epoch)
+    if(UserDate.DecimalYear > priv->MagneticModel.CoefficientFileEndDate || UserDate.DecimalYear < priv->MagneticModel.epoch)
     {
       throw std::runtime_error(std::string("WMM::calculateDeclination: given year ") + 
         std::to_string(UserDate.DecimalYear) + 
         std::string(" is out of range of WMM data [") + 
-        std::to_string(priv->MagneticModels[0]->epoch) +
+        std::to_string(priv->MagneticModel.epoch) +
         std::string(", ") +
-        std::to_string(priv->MagneticModels[0]->CoefficientFileEndDate) +
+        std::to_string(priv->MagneticModel.CoefficientFileEndDate) +
         std::string("]")
       );
     }
 
     MAG_GeodeticToSpherical(priv->Ellip, CoordGeodetic, &CoordSpherical); /*Convert from geodetic to Spherical Equations: 17-18, WMM Technical report*/
-    MAG_TimelyModifyMagneticModel(UserDate, priv->MagneticModels[0], priv->TimedMagneticModel); /* Time adjust the coefficients, Equation 19, WMM Technical report */
+    MAG_TimelyModifyMagneticModel(UserDate, &(priv->MagneticModel), &(priv->TimedMagneticModel)); /* Time adjust the coefficients, Equation 19, WMM Technical report */
     double declination = 0;
-    int r = MAG_declination(priv->Ellip, CoordSpherical, CoordGeodetic, priv->TimedMagneticModel, &declination);
-    if(r == FALSE)
+    int err = MAG_declination(priv->Ellip, CoordSpherical, CoordGeodetic, &(priv->TimedMagneticModel), &declination);
+    if(err)
       throw std::runtime_error("Unable to calculate declination");
 
     //MAG_CalculateGridVariation(CoordGeodetic, &GeoMagneticElements);
@@ -126,8 +122,8 @@ double WMM::calculateDeclination(double latitude, double longitude, double altit
 
 WMM::~WMM() noexcept
 {
-    MAG_FreeMagneticModelMemory(priv->TimedMagneticModel);
-    MAG_FreeMagneticModelMemory(priv->MagneticModels[0]);
+    MAG_FreeMagneticModelMemory(&(priv->TimedMagneticModel)); // todo move into WMM_private destructor
+    MAG_FreeMagneticModelMemory(&(priv->MagneticModel)); // todo move into WMM_private destructor
     delete priv;
 }
 

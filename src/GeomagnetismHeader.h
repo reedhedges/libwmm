@@ -26,7 +26,8 @@
 #ifndef GEOMAGHEADER_H
 #define GEOMAGHEADER_H
 
-/*TODO use this to help fix ignored error return codes: #define MAG_NODISCARD __attribute__((warn_unused_result))*/
+/* TODO use this to help fix ignored error return codes: */
+/* #define MAG_NODISCARD __attribute__((warn_unused_result)) */
 #define MAG_NODISCARD 
 
 
@@ -300,15 +301,19 @@ void MAG_Gradient(MAGtype_Ellipsoid Ellip,
         MAGtype_Gradient *Gradient);
 
 
+#ifdef MAG_UNUSED_CODE
 int MAG_robustReadMagneticModel_Large(char *filename, char* filenameSV, MAGtype_MagneticModel **MagneticModel) MAG_NODISCARD;
+#endif
 
-int MAG_robustReadMagModels(char *filename, MAGtype_MagneticModel *(*magneticmodels)[], int array_size) MAG_NODISCARD;
+/* Read model from given filename. Coefficient arrays will be allocated in the magnetic model */
+int MAG_robustReadMagModel(const char *filename, MAGtype_MagneticModel *magneticmodel) MAG_NODISCARD;
+//was: int MAG_robustReadMagModels(char *filename, MAGtype_MagneticModel *(*magneticmodels)[], int array_size) MAG_NODISCARD;
 
 int MAG_SetDefaults(MAGtype_Ellipsoid *Ellip, MAGtype_Geoid *Geoid);
 
 /*User Interface*/
 
-void MAG_Error(int control);
+int MAG_Error(int control);
 
 #ifdef MAG_UNUSED_CODE
 
@@ -351,6 +356,8 @@ MAGtype_LegendreFunction *MAG_AllocateLegendreFunctionMemory(int NumTerms);
 
 MAGtype_MagneticModel *MAG_AllocateModelMemory(int NumTerms);
 
+int MAG_AllocateModelTerms(MAGtype_MagneticModel *model, int numTerms);
+
 MAGtype_SphericalHarmonicVariables *MAG_AllocateSphVarMemory(int nMax);
 
 void MAG_AssignHeaderValues(MAGtype_MagneticModel *model, char values[][MAXLINELENGTH]);
@@ -373,11 +380,12 @@ void MAG_PrintEMMFormat(char *filename, char *filenameSV, MAGtype_MagneticModel 
 void MAG_PrintSHDFFormat(char *filename, MAGtype_MagneticModel *(*MagneticModel)[], int epochs);
 #endif
 
-int MAG_readMagneticModel(char *filename, MAGtype_MagneticModel *MagneticModel) MAG_NODISCARD;
+int MAG_readMagneticModel(const char *filename, MAGtype_MagneticModel *MagneticModel) MAG_NODISCARD;
 
+#ifdef MAG_UNUSED_CODE
 int MAG_readMagneticModel_Large(char *filename, char *filenameSV, MAGtype_MagneticModel *MagneticModel) MAG_NODISCARD;
-
 int MAG_readMagneticModel_SHDF(char *filename, MAGtype_MagneticModel *(*magneticmodels)[], int array_size) MAG_NODISCARD;
+#endif
 
 char *MAG_Trim(char *str) MAG_NODISCARD;
 

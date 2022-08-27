@@ -157,6 +157,8 @@ INPUT: Ellip
 
 OUTPUT : declination
 
+RETURN 0 on no errors, value > 0 on error.
+
 CALLS:  	MAG_AllocateLegendreFunctionMemory(NumTerms);  ( For storing the ALF functions )
                      MAG_ComputeSphericalHarmonicVariables( Ellip, CoordSpherical, TimedMagneticModel->nMax, &SphVariables); (Compute Spherical Harmonic variables  )
                      MAG_AssociatedLegendreFunction(CoordSpherical, TimedMagneticModel->nMax, LegendreFunction);  	Compute ALF
@@ -190,10 +192,10 @@ CALLS:  	MAG_AllocateLegendreFunctionMemory(NumTerms);  ( For storing the ALF fu
     MAG_FreeLegendreMemory(LegendreFunction);
     MAG_FreeSphVarMemory(SphVariables);
 
-    /* TODO return FALSE if any above functions had errors. */
+    /* TODO return error code if any above functions had errors. */
 
-    return TRUE;
-} /*MAG_Geomag*/
+    return 0;
+} 
 
 #ifdef UNUSED_CODE
 void MAG_Gradient(MAGtype_Ellipsoid Ellip, MAGtype_CoordGeodetic CoordGeodetic, MAGtype_MagneticModel *TimedMagneticModel, MAGtype_Gradient *Gradient)
@@ -301,6 +303,7 @@ int MAG_SetDefaults(MAGtype_Ellipsoid *Ellip, MAGtype_Geoid *Geoid)
     return TRUE;
 } /*MAG_SetDefaults */
 
+#ifdef MAG_UNUSED_CODE
 int MAG_robustReadMagneticModel_Large(char *filename, char *filenameSV, MAGtype_MagneticModel **MagneticModel)
 {
     char line[MAXLINELENGTH], ModelName[] = "Enhanced Magnetic Model";/*Model Name must be no longer than 31 characters*/
@@ -356,23 +359,28 @@ int MAG_robustReadMagneticModel_Large(char *filename, char *filenameSV, MAGtype_
     (*MagneticModel)->EditionDate = (*MagneticModel)->epoch;
     return 1;
 } /*MAG_robustReadMagneticModel_Large*/
+#endif
 
-int MAG_robustReadMagModels(char *filename, MAGtype_MagneticModel *(*magneticmodels)[], int array_size)
+int MAG_robustReadMagModel(const char *filename, MAGtype_MagneticModel *magneticmodel) /*, int array_size)*/
 {
     char line[MAXLINELENGTH];
     int n, nMax = 0, num_terms, a;
     FILE *MODELFILE;
     MODELFILE = fopen(filename, "r");
     if(MODELFILE == 0) {
-        return 0;
+        MAG_Error(6);
+        return 6;
     }
     if (NULL==fgets(line, MAXLINELENGTH, MODELFILE)){
-        return 0;
+        fclose(MODELFILE);
+        MAG_Error(8);
+        return 8;
     }
-    if(line[0] == '%'){
-        MAG_readMagneticModel_SHDF(filename, magneticmodels, array_size);
+    /*if(line[0] == '%'){
+        MAG_readMagneticModel_SHDF(filename, &magneticmodels, array_size);
     }
     else if(array_size == 1)
+    */
     {
 
         do
@@ -384,15 +392,27 @@ int MAG_robustReadMagModels(char *filename, MAGtype_MagneticModel *(*magneticmod
                 nMax = n;
         } while(n < 99999 && a == 1);
         num_terms = CALCULATE_NUMTERMS(nMax);
-        (*magneticmodels)[0] = MAG_AllocateModelMemory(num_terms);
-        (*magneticmodels)[0]->nMax = nMax;
-        (*magneticmodels)[0]->nMaxSecVar = nMax;
-        MAG_readMagneticModel(filename, (*magneticmodels)[0]);
-        (*magneticmodels)[0]->CoefficientFileEndDate = (*magneticmodels)[0]->epoch + 5;
+        //(magneticmodels)[0] = MAG_AllocateModelMemory(num_terms);
+        int err = MAG_AllocateModelTerms(magneticmodel, num_terms);
+        if(err)
+        {
+          fclose(MODELFILE);
+          return err;
+        }
+        magneticmodel->nMax = nMax;
+        magneticmodel->nMaxSecVar = nMax;
+        err = MAG_readMagneticModel(filename, magneticmodel);
+        if(err)
+        {
+            fclose(MODELFILE);
+            return err;
+        }
+        magneticmodel->CoefficientFileEndDate = magneticmodel->epoch + 5;
 
-    } else return 0;
+    } 
+    /*else return 0;*/
     fclose(MODELFILE);
-    return 1;
+    return 0;
 } /*MAG_robustReadMagModels*/
 
 /*End of Wrapper Functions*/
@@ -405,7 +425,7 @@ int MAG_robustReadMagModels(char *filename, MAGtype_MagneticModel *(*magneticmod
  ******************************************************************************/
 
 
-void MAG_Error(int control)
+int MAG_Error(int control)
 
 /*This prints WMM errors.
 INPUT     control     Error look up number
@@ -453,7 +473,7 @@ CALLS : none
             break;
         case 13:
             printf("\nError printing user data\n");\
-			break;
+            break;
         case 14:
             printf("\nError allocating in MAG_SummationSpecial\n");
             break;
@@ -484,6 +504,7 @@ CALLS : none
             printf("Replace the existing EGM9615.BIN file with the downloaded one\n");
             break;
     }
+    return control;
 } /*MAG_Error*/
 
 #if UNUSED_CODE
@@ -1240,8 +1261,6 @@ CALLS : none
  */
 {
     MAGtype_MagneticModel *MagneticModel;
-    int i;
-
 
     MagneticModel = (MAGtype_MagneticModel *) calloc(1, sizeof (MAGtype_MagneticModel));
 
@@ -1251,32 +1270,52 @@ CALLS : none
         return NULL;
     }
 
+    int err = MAG_AllocateModelTerms(MagneticModel, NumTerms);
+    if(err)
+    {
+      free(MagneticModel);
+      return NULL;
+    }
+    return MagneticModel;
+}
+
+/* Initialize MagneticModel and allocate arrays of coefficients in the model. Use MAG_FreeMagneticMemory() to deallocate all terms and free model memory. Return 0 on success, or error code on errors (All memory will be freed if there is an error.) */
+int MAG_AllocateModelTerms(MAGtype_MagneticModel *MagneticModel, int NumTerms)
+{
+    int i;
+
     MagneticModel->Main_Field_Coeff_G = (double *) malloc((NumTerms + 1) * sizeof ( double));
 
     if(MagneticModel->Main_Field_Coeff_G == NULL)
     {
         MAG_Error(2);
-        return NULL;
+        return 2;
     }
 
     MagneticModel->Main_Field_Coeff_H = (double *) malloc((NumTerms + 1) * sizeof ( double));
 
     if(MagneticModel->Main_Field_Coeff_H == NULL)
     {
+        if(MagneticModel->Main_Field_Coeff_G) free(MagneticModel->Main_Field_Coeff_G);
         MAG_Error(2);
-        return NULL;
+        return 2;
     }
     MagneticModel->Secular_Var_Coeff_G = (double *) malloc((NumTerms + 1) * sizeof ( double));
     if(MagneticModel->Secular_Var_Coeff_G == NULL)
     {
+        if(MagneticModel->Main_Field_Coeff_G) free(MagneticModel->Main_Field_Coeff_G);
+        if(MagneticModel->Main_Field_Coeff_H) free(MagneticModel->Main_Field_Coeff_H);
         MAG_Error(2);
-        return NULL;
+        return 2;
     }
     MagneticModel->Secular_Var_Coeff_H = (double *) malloc((NumTerms + 1) * sizeof ( double));
     if(MagneticModel->Secular_Var_Coeff_H == NULL)
     {
+        if(MagneticModel->Main_Field_Coeff_G) free(MagneticModel->Main_Field_Coeff_G);
+        if(MagneticModel->Main_Field_Coeff_H) free(MagneticModel->Main_Field_Coeff_H);
+        if(MagneticModel->Secular_Var_Coeff_G) free(MagneticModel->Secular_Var_Coeff_G);
         MAG_Error(2);
-        return NULL;
+        return 2;
     }
     MagneticModel->CoefficientFileEndDate = 0;
     MagneticModel->EditionDate = 0;
@@ -1285,7 +1324,7 @@ CALLS : none
     MagneticModel->epoch = 0;
     MagneticModel->nMax = 0;
     MagneticModel->nMaxSecVar = 0;
-    
+
     for(i=0; i<NumTerms; i++) {
         MagneticModel->Main_Field_Coeff_G[i] = 0;
         MagneticModel->Main_Field_Coeff_H[i] = 0;
@@ -1293,9 +1332,9 @@ CALLS : none
         MagneticModel->Secular_Var_Coeff_H[i] = 0;
     }
     
-    return MagneticModel;
+    return 0;
 
-} /*MAG_AllocateModelMemory*/
+}
 
 MAGtype_SphericalHarmonicVariables* MAG_AllocateSphVarMemory(int nMax)
 {
@@ -1360,6 +1399,7 @@ void MAG_AssignMagneticModelCoeffs(MAGtype_MagneticModel *Assignee, MAGtype_Magn
     return;
 } /*MAG_AssignMagneticModelCoeffs*/
 
+/* Free allocated memory contained in each data structure provided, and also destroy each data structure. Each argument must point to an allocated struct. */
 int MAG_FreeMemory(MAGtype_MagneticModel *MagneticModel, MAGtype_MagneticModel *TimedMagneticModel, MAGtype_LegendreFunction *LegendreFunction)
 
 /* Free memory used by WMM functions. Only to be called at the end of the main function.
@@ -1499,11 +1539,13 @@ CALLS : none
         free(MagneticModel->Secular_Var_Coeff_H);
         MagneticModel->Secular_Var_Coeff_H = NULL;
     }
+/*
     if(MagneticModel)
     {
         free(MagneticModel);
         MagneticModel = NULL;
     }
+*/
 
     return TRUE;
 } /*MAG_FreeMagneticModelMemory */
@@ -1697,7 +1739,7 @@ void MAG_PrintSHDFFormat(char *filename, MAGtype_MagneticModel *(*MagneticModel)
 
 #endif
 
-int MAG_readMagneticModel(char *filename, MAGtype_MagneticModel * MagneticModel)
+int MAG_readMagneticModel(const char *filename, MAGtype_MagneticModel * MagneticModel)
 {
 
     /* READ WORLD Magnetic MODEL SPHERICAL HARMONIC COEFFICIENTS (WMM.cof)
@@ -1722,9 +1764,9 @@ int MAG_readMagneticModel(char *filename, MAGtype_MagneticModel * MagneticModel)
     MAG_COF_File = fopen(filename, "r");
     
     if(MAG_COF_File == NULL)
-    {
+    {   
         MAG_Error(20);
-        return FALSE;
+        return 20;
         /* should we have a standard error printing routine ?*/
     }
     MagneticModel->Main_Field_Coeff_H[0] = 0.0;
@@ -1734,14 +1776,16 @@ int MAG_readMagneticModel(char *filename, MAGtype_MagneticModel * MagneticModel)
     char *s = fgets(c_str, 80, MAG_COF_File);
     if(s == NULL)
     {
+        fclose(MAG_COF_File);
         MAG_Error(23);
-        return FALSE;
+        return 23;
     }
     int r = sscanf(c_str, "%lf%s", &epoch, MagneticModel->ModelName);
     if(r == EOF || r < 2)
     {
+        fclose(MAG_COF_File);
         MAG_Error(23);
-        return FALSE;
+        return 23;
     }
     MagneticModel->epoch = epoch;
     while(EOF_Flag == 0)
@@ -1765,8 +1809,9 @@ int MAG_readMagneticModel(char *filename, MAGtype_MagneticModel * MagneticModel)
         r = sscanf(c_str, "%d%d%lf%lf%lf%lf", &n, &m, &gnm, &hnm, &dgnm, &dhnm);
         if(r == EOF || r < 6)
         {
+            fclose(MAG_COF_File);
             MAG_Error(23);
-            return FALSE;
+            return 23;
         }
         if(m <= n)
         {
@@ -1779,9 +1824,10 @@ int MAG_readMagneticModel(char *filename, MAGtype_MagneticModel * MagneticModel)
     }
 
     fclose(MAG_COF_File);
-    return TRUE;
+    return 0;
 } /*MAG_readMagneticModel*/
 
+#ifdef MAG_UNUSED_CODE
 int MAG_readMagneticModel_Large(char *filename, char *filenameSV, MAGtype_MagneticModel *MagneticModel)
 
 /*  To read the high-degree model coefficients (for example, NGDC 720)
@@ -1872,7 +1918,9 @@ int MAG_readMagneticModel_Large(char *filename, char *filenameSV, MAGtype_Magnet
 
     return TRUE;
 } /*MAG_readMagneticModel_Large*/
+#endif
 
+#ifdef MAG_UNUSED_CODE
 int MAG_readMagneticModel_SHDF(char *filename, MAGtype_MagneticModel *(*magneticmodels)[], int array_size)
 /*
  * MAG_readMagneticModels - Read the Magnetic Models from an SHDF format file
@@ -2030,6 +2078,7 @@ int MAG_readMagneticModel_SHDF(char *filename, MAGtype_MagneticModel *(*magnetic
     ptrreset = NULL;
     return header_index + 1;
 }/*MAG_readMagneticModel_SHDF*/
+#endif
 
 char *MAG_Trim(char *str)
 {
@@ -2218,57 +2267,57 @@ void MAG_CartesianToGeodetic(MAGtype_Ellipsoid Ellip, double x, double y, double
 /*
  *   2.0 compute intermediate values for latitude
  */
-        r= sqrt( x*x + y*y );
-        e= ( modified_b*z - (Ellip.a*Ellip.a - modified_b*modified_b) ) / ( Ellip.a*r );
-        f= ( modified_b*z + (Ellip.a*Ellip.a - modified_b*modified_b) ) / ( Ellip.a*r );
+  r= sqrt( x*x + y*y );
+  e= ( modified_b*z - (Ellip.a*Ellip.a - modified_b*modified_b) ) / ( Ellip.a*r );
+  f= ( modified_b*z + (Ellip.a*Ellip.a - modified_b*modified_b) ) / ( Ellip.a*r );
 /*
- *   3.0 find solution to:
- *       t^4 + 2*E*t^3 + 2*F*t - 1 = 0
- */
-        p= (4.0 / 3.0) * (e*f + 1.0);
-        q= 2.0 * (e*e - f*f);
-        d= p*p*p + q*q;
+*   3.0 find solution to:
+*       t^4 + 2*E*t^3 + 2*F*t - 1 = 0
+*/
+  p= (4.0 / 3.0) * (e*f + 1.0);
+  q= 2.0 * (e*e - f*f);
+  d= p*p*p + q*q;
 
-        if( d >= 0.0 ) 
-          {
-            v= pow( (sqrt( d ) - q), (1.0 / 3.0) )
-              - pow( (sqrt( d ) + q), (1.0 / 3.0) );
-          } 
-        else 
-          {
-            v= 2.0 * sqrt( -p )
-              * cos( acos( q/(p * sqrt( -p )) ) / 3.0 );
-          }
+  if( d >= 0.0 ) 
+    {
+      v= pow( (sqrt( d ) - q), (1.0 / 3.0) )
+        - pow( (sqrt( d ) + q), (1.0 / 3.0) );
+    } 
+  else 
+    {
+      v= 2.0 * sqrt( -p )
+        * cos( acos( q/(p * sqrt( -p )) ) / 3.0 );
+    }
 /*
- *   4.0 improve v
- *       NOTE: not really necessary unless point is near pole
- */
-        if( v*v < fabs(p) ) {
-                v= -(v*v*v + 2.0*q) / (3.0*p);
-        }
-        g = (sqrt( e*e + v ) + e) / 2.0;
-        t = sqrt( g*g  + (f - v*g)/(2.0*g - e) ) - g;
+*   4.0 improve v
+*       NOTE: not really necessary unless point is near pole
+*/
+  if( v*v < fabs(p) ) {
+          v= -(v*v*v + 2.0*q) / (3.0*p);
+  }
+  g = (sqrt( e*e + v ) + e) / 2.0;
+  t = sqrt( g*g  + (f - v*g)/(2.0*g - e) ) - g;
 
-        rlat =atan( (Ellip.a*(1.0 - t*t)) / (2.0*modified_b*t) );
-        CoordGeodetic->phi = RAD2DEG(rlat);
-        
+  rlat =atan( (Ellip.a*(1.0 - t*t)) / (2.0*modified_b*t) );
+  CoordGeodetic->phi = RAD2DEG(rlat);
+  
 /*
- *   5.0 compute height above ellipsoid
- */
-        CoordGeodetic->HeightAboveEllipsoid = (r - Ellip.a*t) * cos(rlat) + (z - modified_b) * sin(rlat);
+*   5.0 compute height above ellipsoid
+*/
+  CoordGeodetic->HeightAboveEllipsoid = (r - Ellip.a*t) * cos(rlat) + (z - modified_b) * sin(rlat);
 /*
- *   6.0 compute longitude east of Greenwich
- */
-        zlong = atan2( y, x );
-        if( zlong < 0.0 )
-                zlong= zlong + 2*M_PI;
+*   6.0 compute longitude east of Greenwich
+*/
+  zlong = atan2( y, x );
+  if( zlong < 0.0 )
+          zlong= zlong + 2*M_PI;
 
-        CoordGeodetic->lambda = RAD2DEG(zlong);
-        while(CoordGeodetic->lambda > 180)
-        {
-            CoordGeodetic->lambda-=360;
-        }
-    
+  CoordGeodetic->lambda = RAD2DEG(zlong);
+  while(CoordGeodetic->lambda > 180)
+  {
+      CoordGeodetic->lambda-=360;
+  }
+
 }
 
 MAGtype_CoordGeodetic MAG_CoordGeodeticAssign(MAGtype_CoordGeodetic CoordGeodetic)
