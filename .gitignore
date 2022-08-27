@@ -1,0 +1,8 @@
+build
+*.o
+*.a
+test
+WMM.COF
+checks.json
+.vscode
+Makefile.dep
