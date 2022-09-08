@@ -8,11 +8,10 @@ AR ?= ar
 RANLIB ?= ranlib
 INSTALL ?= install
 
-COMMON_CFLAGS = -g -O3 -fPIC -Wall -W -Wextra -Iinclude -Isrc  #-flto=auto
+COMMON_CFLAGS = -g -O3 -fPIC -Wall -W -Wextra -Iinclude -Isrc 
 CFLAGS = $(COMMON_CFLAGS) $(EXTRA_CFLAGS)
 CXXFLAGS = -std=c++20 $(COMMON_CFLAGS) $(EXTRA_CXXFLAGS)
-# Note could also use -flto=thin on Clang, or -flto if -flto=auto is not supported.
-LDFLAGS = $(EXTRA_LDFLAGS) #-fuse-linker-plugin # allow linking programs to use LTO
+LDFLAGS = $(EXTRA_LDFLAGS)
 LIBS = -lm
 
 all: $(LIB_DIR)/libwmm.a
@@ -31,6 +30,9 @@ info: FORCE
 	@echo   CXXFLAGS=$(CXXFLAGS)
 	@echo   EXTRA_LDFLAGS=$(EXTRA_LDFLAGS)
 	@echo
+
+env: FORCE
+	env
 
 $(LIB_DIR)/libwmm.a: $(OBJ_DIR)/wmm.o $(OBJ_DIR)/GeomagnetismLibrary.o $(OBJ_DIR)/EGM9615.o
 	@mkdir -p $(LIB_DIR)
