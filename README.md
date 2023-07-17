@@ -12,9 +12,15 @@ for that coordinate based on data read from a magnetic model file (WMM.COF).
 Requires C++20 since it uses `std::chrono::year_month_day` type added in C++20.
 (This could be changed if neccesary.)  
 
-You can use either CMake or just GNU Make to build.  If using Make, various output 
+You can use either CMake or just GNU Make to build. 
+
+If using Make, various output 
 directories and names of commands can be set via environment variables when running `make`,
 see top of Makefile.
+
+If using CMake, some options are available, including: 
+  * `CMAKE_BUILD_TYPE`: "Release", "Debug", or "RelWithDebug"
+  * `LIBWMM_ENABLE_IPO`: if ON, enable inter-procedural optimization (link-time optimization) whenever `CMAKE_BUILD_TYPE` starts with the pattern "Rel.\*" (i.e. in "Release" or "RelWithDebug" modes.) 
 
 libwmm is compiled as a static library.
 
@@ -26,7 +32,7 @@ SHDF model file support has been removed, only WMM.COF file is supported.
 
 ### To Do
 
-  * Verify all CMake build types (Debug, Release, etc.). Enable IPO in CMake Release build (optional).
+  * Verify all CMake build types (Debug, Release, etc.). 
   * More tests including impossible or unusual locations (poles?), verify behavior in "blackout" zones.
   * Improve error handling in GeomagnetismLibrary.c:
     * Some functions return an error code > 0 on errors, and 0 on success. Some return 1 (true) on success, 0 on error. Fix.

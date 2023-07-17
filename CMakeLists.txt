@@ -2,7 +2,14 @@ cmake_minimum_required(VERSION 3.16)
 project(libwmm VERSION 0.1 LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-option(LIBWMM_ENABLE_IPO "Enable LPO/LTO if build type is Release, RelWithDebug, or otherwise matches Rel*")
+option(LIBWMM_ENABLE_IPO "Enable IPO/LTO if build type is Release, RelWithDebug, or otherwise matches Rel*")
+
+set(parallel $ENV{CMAKE_BUILD_PARALLEL_LEVEL})
+if(parallel)
+  message(STATUS "libwmm: CMAKE_BUILD_PARALLEL_LEVEL environment variable is set to ${parallel}")
+else()
+  message(WARNING "libwmm: CMAKE_BUILD_PARALLEL_LEVEL environment variable is not set")
+endif()
 
 add_library(wmm STATIC 
   src/EGM9615.c
@@ -34,3 +41,4 @@ message(STATUS "libwmm: CMAKE_CXX_COMPILER_TARGET=${CMAKE_CXX_COMPILER_TARGET}")
 message(STATUS "libwmm: CMAKE_C_COMPILER_TARGET=${CMAKE_C_COMPILER_TARGET}")
 message(STATUS "libwmm: CMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
 message(STATUS "libwmm: LIBWMM_ENABLE_IPO=${LIBWMM_ENABLE_IPO}")
+message(STATUS "libwmm: CMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
