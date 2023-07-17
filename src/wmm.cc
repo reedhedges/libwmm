@@ -75,7 +75,6 @@ double WMM::calculateDeclination(double latitude, double longitude, double altit
 
     // TODO could check bounds of latitude, longitude and altitude
 
-
     CoordGeodetic.phi = latitude;
     CoordGeodetic.lambda = longitude;
     CoordGeodetic.HeightAboveGeoid = altitude / 1000.0; // convert from meters to km
